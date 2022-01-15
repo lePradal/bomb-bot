@@ -3,16 +3,16 @@ import time
 from datetime import datetime
 import sys
 
-import sys
-
 def myexcepthook(type, value, traceback, oldhook=sys.excepthook):
     oldhook(type, value, traceback)
-    input("Press RETURN. ")    # use input() in Python 3.x
+    input("Press RETURN. ")
 
 sys.excepthook = myexcepthook
 
-intervalSec = 60 * 50
-lastTime = time.time()
+workersInterval = 60 * 50
+lastWorkingTime = time.time()
+repositionInterval = 60 * 5 
+lastRepositionTime = time.time()
 today = datetime.now().strftime('%d/%m/%Y %H:%M')
 
 def sleep(seconds):
@@ -111,6 +111,27 @@ def work():
     
     return True
 
+def reposition():
+    if (pyautogui.locateOnScreen('./images/back.png', confidence=0.7) is None):
+        return False
+
+    print(':::::: [' + datetime.now().strftime('%d/%m/%Y %H:%M') + '] : Repositioning heroes.')
+    backClicked = False
+    treasureClicked = False
+
+    finished = False
+
+    while not finished:
+        if(not backClicked):
+            backClicked = waitForImageAndClick('./images/back.png', 1, False)
+        if(not treasureClicked and backClicked):
+            treasureClicked = waitForImageAndClick('./images/treasure-hunt.png', 1, False)
+
+        if (backClicked and treasureClicked):
+            finished = True
+            print(':::::: [' + datetime.now().strftime('%d/%m/%Y %H:%M') + '] : Heroes have been repositioned.')
+    
+    return True
 
 banner ="""
 PPPPPPPPPPPPPPPPP                                                     dddddddd                 
@@ -152,10 +173,15 @@ print(bannerBreakLine)
 
 while True:
     try:
-        if (time.time() > lastTime + intervalSec):
+        if (time.time() > lastWorkingTime + workersInterval):
             worked = work()
             if worked:
-                lastTime = time.time()
+                lastWorkingTime = time.time()
+
+        if (time.time() > lastRepositionTime + repositionInterval):
+            repositioned = reposition()
+            if repositioned:
+                lastRepositionTime = time.time()
 
         connectWalletButton = pyautogui.locateOnScreen('./images/connect-wallet.png', confidence=0.7)
         if (connectWalletButton is not None):
